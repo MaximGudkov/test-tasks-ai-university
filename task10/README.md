@@ -2,7 +2,7 @@
 
 - `pip install -r requirements.txt` - install packages
 - fill variables in .env
-- create credentials.json file with you credentials
+- create credentials.json file with your credentials
 - `uvicorn src.main:app --reload`
 
 ### Usage:
