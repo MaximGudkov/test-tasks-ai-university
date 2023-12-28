@@ -1,0 +1,131 @@
+version: "3.8"
+
+services:
+  statistics:
+    container_name: statistics
+    build:
+      context: .
+      dockerfile: docker/dev/statistics_project/Dockerfile
+    restart: on-failure:3
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./statistics_project:/usr/src/statistics_project
+    env_file:
+      - docker/dev/env/.statistics_project.env
+      - docker/dev/env/.db.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  db:
+    container_name: db
+    image: "postgres:15.1-alpine"
+    restart: unless-stopped
+    env_file:
+      - docker/dev/env/.db.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+  redis:
+   container_name: portal_redis
+   image: "redis:7.0.8-alpine"
+   restart: unless-stopped
+   volumes:
+     - redis_data:/data
+
+  celery:
+    container_name: celery
+    build:
+      context: .
+      dockerfile: docker/dev/statistics_project/Dockerfile
+    restart: on-failure:3
+    entrypoint: ""
+    command: celery -A src worker --beat -l info
+    env_file:
+      - docker/dev/env/.statistics_project.env
+      - docker/dev/env/.db.env
+    volumes:
+      - ./statistics_project:/usr/src/statistics_project
+    depends_on:
+      - statistics
+
+
+volumes:
+  postgres_data:
+  redis_data:
+
+
+
+
+
+
+  #  # bot:
+  #  #   container_name: portal_bot
+  #  #   build:
+  #  #     context: .
+  #  #     dockerfile: docker/dev/bot/Dockerfile
+  #  #   restart: on-failure:10
+  #  #   command: python bot.py
+  #  #   volumes:
+  #  #     - ./bot:/usr/src/bot
+  #  #   env_file:
+  #  #     - docker/dev/env/.bot.env
+  #  #     - docker/dev/env/.db.env
+  #  #   depends_on:
+  #  #     - backend
+  # flower:
+  #   container_name: portal_flower
+  #   build:
+  #     context: .
+  #     dockerfile: docker/dev/backend/Dockerfile
+  #   restart: on-failure:10
+  #   ports:
+  #     - "5555:5555"
+  #   entrypoint: ""
+  #   command: celery -A src flower
+  #   env_file:
+  #     - docker/dev/env/.backend.env
+  #     - docker/dev/env/.db.env
+  #     - docker/dev/env/.bot.env
+  #   volumes:
+  #     - ./backend:/usr/src/backend
+  #   depends_on:
+  #     - backend
+  #  db:
+  #    container_name: portal_db
+  #    image: "postgres:15.1-alpine"
+  #    restart: unless-stopped
+  #    env_file:
+  #      - docker/dev/env/.db.env
+  #    volumes:
+  #      - postgres_data:/var/lib/postgresql/data/
+  #  redis:
+  #    container_name: portal_redis
+  #    image: "redis:7.0.8-alpine"
+  #    restart: unless-stopped
+  #    volumes:
+  #      - redis_data:/data
+  # rabbitmq:
+  #   image: rabbitmq:3-management
+  #   ports:
+  #     - "5672:5672"
+  #     - "15672:15672"
+  #   volumes:
+  #     - rabbitmq:/var/lib/rabbitmq
+  #  frontend:
+  #    container_name: portal_react
+  #    build:
+  #      context: .
+  #      dockerfile: ./docker/dev/frontend/Dockerfile
+  #    restart: unless-stopped
+  #    env_file:
+  #      - docker/dev/env/.frontend.env
+  #    ports:
+  #      - "3000:3000"
+  #    command: npm start
+  #    volumes:
+  #      - ./frontend/public:/usr/src/frontend/public
+  #      - ./frontend/src:/usr/src/frontend/src
+  #    depends_on:
+  #      - backend
