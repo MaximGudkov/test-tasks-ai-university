@@ -1,63 +1,25 @@
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-from src.constants import GITHUB_API_URL, SPREADSHEET_ID, SPREADSHEET_RANGE
-from src.service import google_sheets_service
+from src.utils import add_data_to_sheet, get_github_user_data, get_sheet_data
 
 router = APIRouter()
 
 
 @router.get("/github/{username}")
 async def get_github_user_info(username: str):
-    github_url = GITHUB_API_URL + username
-    async with httpx.AsyncClient() as client:
-        response = await client.get(github_url)
-        if response.status_code == 200:
-            user_info = response.json()
-            return user_info
-        else:
-            raise HTTPException(
-                status_code=response.status_code, detail="User not found"
-            )
+    user_info = await get_github_user_data(username)
+    return user_info
 
 
-@router.post("/add-to-sheet")
+@router.get("/add-to-sheet")
 async def add_to_sheet(username: str):
-    github_url = GITHUB_API_URL + username
-
-    async with httpx.AsyncClient() as client:
-        response = await client.get(github_url)
-        if response.is_success:
-            user_data = response.json()
-        else:
-            raise HTTPException(
-                status_code=response.status_code, detail="GitHub API request failed"
-            )
-
-    keys = list(user_data.keys())
-    values = list(user_data.values())
-
-    body = {"values": [keys, values]}
-
-    google_sheets_service.spreadsheets().values().append(
-        spreadsheetId=SPREADSHEET_ID,
-        range=SPREADSHEET_RANGE,
-        body=body,
-        valueInputOption="RAW",
-    ).execute()
-
+    user_data = await get_github_user_data(username)
+    add_data_to_sheet(user_data)
     return {"status": "success", "message": "Data added to Google Sheets"}
 
 
 @router.get("/get-from-sheet")
 async def get_from_sheet():
-    result = (
-        google_sheets_service.spreadsheets()
-        .values()
-        .get(spreadsheetId=SPREADSHEET_ID, range=SPREADSHEET_RANGE)
-        .execute()
-    )
-
-    values = result.get("values", [])
-
-    return values
+    result = get_sheet_data()
+    return result
