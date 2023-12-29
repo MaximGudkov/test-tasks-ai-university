@@ -1,2 +1,3 @@
-[Тестовое задание.docx](https://github.com/MaximGudkov/test-tasks/files/13786498/default.docx)
+Тестовое задание (12 задач) в компанию "Университет искуственного интелекта"
+- [Тестовое задание.docx](https://github.com/MaximGudkov/test-tasks/files/13786498/default.docx)
 - К некоторым заданиям создал README для удобного запуска
